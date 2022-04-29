@@ -65,6 +65,18 @@ _STATUS_MAP = {
 
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
 
+QPU_TO_N_QUBITS = {
+    "qpu": 11,
+    "qpu.s11": 11,
+    "qpu.aria.1": 23,
+    "qpu.harmony": 11,
+    "simulator": 19,
+}
+
+
+def _get_qubit_count(device_name: str) -> int:
+    return QPU_TO_N_QUBITS.get(device_name, 11)
+
 
 class IonQAuthenticationError(Exception):
     """Raised when there is no IonQ api key available."""
@@ -76,10 +88,8 @@ class IonQAuthenticationError(Exception):
 class IonQBackend(Backend):
     """
     Interface to an IonQ device.
-
     Requires a valid API key/access token, this can either be provided as a
     parameter or set in config using :py:meth:`pytket.extensions.ionq.set_ionq_config`
-
     """
 
     _supports_counts = True
@@ -94,7 +104,6 @@ class IonQBackend(Backend):
     ):
         """
         Construct a new IonQ backend.
-
         :param      device_name:  device name, either "qpu" or "simulator". Default is
             "qpu".
         :type       device_name:  Optional[string]
@@ -130,15 +139,19 @@ class IonQBackend(Backend):
 
     @classmethod
     def available_devices(cls, **kwargs: Any) -> List[BackendInfo]:
-        return [
-            fully_connected_backendinfo(
-                cls.__name__,
-                "qpu",
-                __extension_version__,
-                IONQ_N_QUBITS,
-                ionq_gates,
+        backend_infos = []
+        qpu_names = list(QPU_TO_N_QUBITS.keys())
+        for device in qpu_names:
+            backend_infos.append(
+                fully_connected_backendinfo(
+                    cls.__name__,
+                    device,
+                    __extension_version__,
+                    QPU_TO_N_QUBITS[device],
+                    ionq_gates,
+                )
             )
-        ]
+        return backend_infos
 
     @property
     def required_predicates(self) -> List[Predicate]:
