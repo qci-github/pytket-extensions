@@ -52,7 +52,7 @@ from pytket.utils.outcomearray import OutcomeArray
 from .ionq_convert import ionq_rebase_pass, ionq_gates, ionq_singleqs, tk_to_ionq
 from .config import IonQConfig
 
-IONQ_JOBS_URL = "https://api.ionq.co/v0.1/jobs/"
+IONQ_JOBS_URL = "https://api-staging.ionq.co/v0.2/jobs/"
 
 
 _STATUS_MAP = {
@@ -143,10 +143,15 @@ class IonQBackend(Backend):
                 )
             }
         resp = get(
-            "https://api.ionq.co/v0.2/backends",
+            "https://api-staging.ionq.co/v0.2/backends",
             headers=IonQBackend._get_header(api_key),
         ).json()
-
+        print(resp)
+        # hardcoding additional backend aria since not available in test environment
+        resp.append({'backend': 'qpu.aria-1',
+                     'status': 'available',
+                     'qubits': 22})
+        
         if "error" in resp:
             raise RuntimeError(resp["error"])
 
@@ -281,7 +286,9 @@ class IonQBackend(Backend):
                 header["Content-Type"] = "application/json"
                 try:
                     # post job
+                    print(json.dumps(bodycopy))
                     resp = post(self._url, json.dumps(bodycopy), headers=header).json()
+                    print(resp)
                     if "error" in resp:
                         raise RuntimeError(resp["error"])
                     if resp["status"] == "failed":
